@@ -25,4 +25,24 @@ public sealed partial class RadarConsoleComponent : Component
     /// </summary>
     [DataField]
     public bool FollowEntity = false;
+
+    /// <summary>
+    /// When true the console will refuse to provide a radar feed unless a powered emitter is nearby.
+    /// </summary>
+    [DataField("requireEmitter")]
+    public bool RequireEmitter = false;
+
+    /// <summary>
+    /// Maximum allowed distance in world units between the console and the external emitter.
+    /// Only used when <see cref="RequireEmitter"/> is true.
+    /// </summary>
+    [DataField("requiredEmitterRange")]
+    public float RequiredEmitterRange = 0f;
+
+    /// <summary>
+    /// Explicitly linked emitter entity. When set, the console will prefer (or require) this emitter.
+    /// </summary>
+    [ViewVariables(VVAccess.ReadWrite)]
+    [DataField("linkedEmitter")]
+    public EntityUid? LinkedEmitter;
 }

@@ -22,6 +22,7 @@ public sealed class RadarConsoleBoundUserInterface : BoundUserInterface
         base.Open();
 
         _window = this.CreateWindow<RadarConsoleWindow>();
+        _window.Interface = this;
     }
 
     protected override void UpdateState(BoundUserInterfaceState state)
@@ -31,5 +32,29 @@ public sealed class RadarConsoleBoundUserInterface : BoundUserInterface
             return;
 
         _window?.UpdateState(cState.State);
+    }
+
+    public void SetActiveMode(bool active)
+    {
+        SendMessage(new RadarConsoleToggleActiveMessage(active));
+    }
+
+    public void LinkEmitter()
+    {
+        SendMessage(new RadarConsoleLinkEmitterMessage());
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (_window != null)
+            {
+                _window.Interface = null;
+                _window = null;
+            }
+        }
+
+        base.Dispose(disposing);
     }
 }
