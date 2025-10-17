@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 using Robust.Shared.Input;
@@ -70,7 +71,7 @@ namespace Content.Client.UserInterface.Controls
         public Vernier()
         {
             MinSize = new Vector2(64, 64);
-            CanFocus = true;
+            CanKeyboardFocus = true;
             MouseFilter = MouseFilterMode.Stop;
         }
 
@@ -98,11 +99,11 @@ namespace Content.Client.UserInterface.Controls
 
             var startPoint = center + direction * (radius * 0.2f);
             var endPoint = center + direction * (radius * 0.9f);
-            var indicatorColor = HasFocus || _isDragging ? Color.Cyan : Color.LightGray;
+            var indicatorColor = HasKeyboardFocus() || _isDragging ? Color.Cyan : Color.LightGray;
             handle.DrawLine(startPoint, endPoint, indicatorColor);
         }
 
-        protected override void KeyBindDown(GUIBoundKeyEventArgs args)
+        protected internal override void KeyBindDown(GUIBoundKeyEventArgs args)
         {
             base.KeyBindDown(args);
 
@@ -115,7 +116,7 @@ namespace Content.Client.UserInterface.Controls
             }
         }
 
-        protected override void KeyBindUp(GUIBoundKeyEventArgs args)
+        protected internal override void KeyBindUp(GUIBoundKeyEventArgs args)
         {
             base.KeyBindUp(args);
 
@@ -126,7 +127,7 @@ namespace Content.Client.UserInterface.Controls
             }
         }
 
-        protected override void MouseMove(GUIMouseMoveEventArgs args)
+        protected internal override void MouseMove(GUIMouseMoveEventArgs args)
         {
             base.MouseMove(args);
 
