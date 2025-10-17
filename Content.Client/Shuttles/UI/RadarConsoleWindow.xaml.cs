@@ -11,7 +11,6 @@ using Robust.Shared.Collections;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Localization;
 
-using RangeControl = Robust.Client.UserInterface.Controls.Range;
 using ButtonEventArgs = Robust.Client.UserInterface.Controls.BaseButton.ButtonEventArgs;
 using static Content.Client.Shuttles.UI.AdvancedShuttleNavControl;
 
@@ -51,8 +50,8 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
         RobustXamlLoader.Load(this);
         TargetList.OnItemSelected += OnTargetSelected;
         TargetList.OnItemDeselected += OnTargetDeselected;
-        BeamSpeedSlider.OnValueChanged += OnBeamSpeedChanged;
-        UpdateBeamSpeedLabel(BeamSpeedSlider.Value);
+        BeamSpeedVernier.OnValueChanged += OnBeamSpeedChanged;
+        UpdateBeamSpeedLabel(BeamSpeedVernier.Value);
 
         EmissionActiveButton.Group = _emissionButtonGroup;
         EmissionPassiveButton.Group = _emissionButtonGroup;
@@ -66,9 +65,8 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
         ModeSectorButton.OnPressed += OnModeSectorPressed;
         ModeOverviewButton.Pressed = true;
 
-        SectorCenterSpinBox.SetButtons(new List<int> { -15, -5, -1 }, new List<int> { 1, 5, 15 });
-        SectorCenterSpinBox.ValueChanged += OnSectorCenterChanged;
-        UpdateSectorCenterValueLabel(SectorCenterSpinBox.Value);
+        SectorCenterVernier.OnValueChanged += OnSectorCenterChanged;
+        UpdateSectorCenterValueLabel(SectorCenterVernier.Value);
         UpdateStatusSummary();
         LinkEmitterButton.OnPressed += OnLinkEmitterPressed;
     }
@@ -157,7 +155,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
         ModeLabel.Visible = visible;
         ModeButtons.Visible = visible;
         BeamSpeedLabel.Visible = visible;
-        BeamSpeedSlider.Visible = visible;
+        BeamSpeedVernier.Visible = visible;
         BeamSpeedValue.Visible = visible;
         StatusSummaryLabel.Visible = visible;
 
@@ -175,7 +173,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
     private void SetSectorControlsVisible(bool visible)
     {
         SectorCenterLabel.Visible = visible;
-        SectorCenterSpinBox.Visible = visible;
+        SectorCenterVernier.Visible = visible;
         SectorCenterValue.Visible = visible;
     }
 
@@ -218,7 +216,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
 
         var value = NormalizeDegrees(_advancedControl.SectorCenterDegrees);
         _updatingSectorCenter = true;
-        SectorCenterSpinBox.OverrideValue(value);
+        SectorCenterVernier.Value = value;
         _updatingSectorCenter = false;
         UpdateSectorCenterValueLabel(value);
         UpdateStatusSummary();
@@ -320,18 +318,18 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
         UpdateStatusSummary();
     }
 
-    private void OnSectorCenterChanged(ValueChangedEventArgs args)
+    private void OnSectorCenterChanged(float value)
     {
-        var value = NormalizeDegrees(args.Value);
+        var normalized = NormalizeDegrees(value);
 
-        if (value != args.Value)
+        if (Math.Abs(normalized - value) > 0.01f)
         {
             _updatingSectorCenter = true;
-            SectorCenterSpinBox.OverrideValue(value);
+            SectorCenterVernier.Value = normalized;
             _updatingSectorCenter = false;
         }
 
-        UpdateSectorCenterValueLabel(value);
+        UpdateSectorCenterValueLabel(normalized);
 
         if (_updatingSectorCenter || _advancedControl == null)
         {
@@ -339,7 +337,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
             return;
         }
 
-        _advancedControl.SetSectorCenter(value);
+        _advancedControl.SetSectorCenter(normalized);
         UpdateStatusSummary();
     }
 
@@ -347,7 +345,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
     {
         var normalized = NormalizeDegrees(value);
         _updatingSectorCenter = true;
-        SectorCenterSpinBox.OverrideValue(normalized);
+        SectorCenterVernier.Value = normalized;
         _updatingSectorCenter = false;
         UpdateSectorCenterValueLabel(normalized);
         UpdateStatusSummary();
@@ -494,12 +492,11 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
         }
     }
 
-    private void OnBeamSpeedChanged(RangeControl slider)
+    private void OnBeamSpeedChanged(float value)
     {
         if (_updatingBeamSpeed)
             return;
 
-        var value = slider.Value;
         UpdateBeamSpeedLabel(value);
 
         if (_advancedControl != null)
@@ -513,7 +510,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
 
         var value = _advancedControl.SweepDegreesPerSecond;
         _updatingBeamSpeed = true;
-        BeamSpeedSlider.SetValueWithoutEvent(value);
+        BeamSpeedVernier.Value = value;
         _updatingBeamSpeed = false;
         UpdateBeamSpeedLabel(value);
     }
@@ -536,10 +533,10 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
             : Loc.GetString("advanced-radar-mode-overview");
 
         var sectorText = mode == RadarScanMode.Sector
-            ? Loc.GetString("advanced-radar-status-sector-value", ("value", $"{SectorCenterSpinBox.Value:0}"))
+            ? Loc.GetString("advanced-radar-status-sector-value", ("value", $"{SectorCenterVernier.Value:0}"))
             : Loc.GetString("advanced-radar-status-sector-off");
 
-        var sweepText = Loc.GetString("advanced-radar-beam-speed-value", ("value", $"{BeamSpeedSlider.Value:0}"));
+        var sweepText = Loc.GetString("advanced-radar-beam-speed-value", ("value", $"{BeamSpeedVernier.Value:0}"));
 
         StatusSummaryLabel.Text = StatusSummaryLabel.Visible
             ? Loc.GetString("advanced-radar-status-summary",
@@ -555,12 +552,12 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
         {
             TargetList.OnItemSelected -= OnTargetSelected;
             TargetList.OnItemDeselected -= OnTargetDeselected;
-            BeamSpeedSlider.OnValueChanged -= OnBeamSpeedChanged;
+            BeamSpeedVernier.OnValueChanged -= OnBeamSpeedChanged;
             ModeOverviewButton.OnPressed -= OnModeOverviewPressed;
             ModeSectorButton.OnPressed -= OnModeSectorPressed;
             EmissionActiveButton.OnPressed -= OnEmissionActivePressed;
             EmissionPassiveButton.OnPressed -= OnEmissionPassivePressed;
-            SectorCenterSpinBox.ValueChanged -= OnSectorCenterChanged;
+            SectorCenterVernier.OnValueChanged -= OnSectorCenterChanged;
             LinkEmitterButton.OnPressed -= OnLinkEmitterPressed;
 
             if (_advancedControl != null)
