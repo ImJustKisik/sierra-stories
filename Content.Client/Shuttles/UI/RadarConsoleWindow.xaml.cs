@@ -321,14 +321,6 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
     private void OnSectorCenterChanged(float value)
     {
         var normalized = NormalizeDegrees(value);
-
-        if (Math.Abs(normalized - value) > 0.01f)
-        {
-            _updatingSectorCenter = true;
-            SectorCenterVernier.Value = normalized;
-            _updatingSectorCenter = false;
-        }
-
         UpdateSectorCenterValueLabel(normalized);
 
         if (_updatingSectorCenter || _advancedControl == null)

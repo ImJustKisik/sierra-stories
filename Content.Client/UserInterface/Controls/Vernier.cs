@@ -71,6 +71,8 @@ namespace Content.Client.UserInterface.Controls
         public Vernier()
         {
             MinSize = new Vector2(64, 64);
+            CanFocus = true;
+            MouseFilter = MouseFilterMode.Stop;
         }
 
         protected override void Draw(DrawingHandleScreen handle)
@@ -90,7 +92,7 @@ namespace Content.Client.UserInterface.Controls
             handle.DrawCircle(center, radius, outlineColor, false);
 
             // Draw indicator
-            var valuePercent = (Value - MinValue) / (MaxValue - MinValue);
+            var valuePercent = (MaxValue - MinValue) == 0 ? 0 : (Value - MinValue) / (MaxValue - MinValue);
             if (float.IsNaN(valuePercent) || float.IsInfinity(valuePercent))
                 valuePercent = 0;
 
@@ -100,15 +102,16 @@ namespace Content.Client.UserInterface.Controls
 
             var startPoint = center + direction * (radius * 0.2f);
             var endPoint = center + direction * (radius * 0.9f);
-            var indicatorColor = Color.Cyan;
+            var indicatorColor = HasFocus || _isDragging ? Color.Cyan : Color.LightGray;
             handle.DrawLine(startPoint, endPoint, indicatorColor);
         }
 
-        protected override void MouseDown(GUIMouseButtonEventArgs args)
+        // NOTE: This code contains compilation errors as I was unable to find the correct event types.
+        protected internal override void KeyBindDown(GUIBoundKeyEventArgs args)
         {
-            base.MouseDown(args);
+            base.KeyBindDown(args);
 
-            if (args.Button == Mouse.Button.Left)
+            if (args.Function == EngineKeyFunctions.UIClick)
             {
                 _isDragging = true;
                 _dragValueStart = Value;
@@ -117,18 +120,20 @@ namespace Content.Client.UserInterface.Controls
             }
         }
 
-        protected override void MouseUp(GUIMouseButtonEventArgs args)
+        // NOTE: This code contains compilation errors as I was unable to find the correct event types.
+        protected internal override void KeyBindUp(GUIBoundKeyEventArgs args)
         {
-            base.MouseUp(args);
+            base.KeyBindUp(args);
 
-            if (args.Button == Mouse.Button.Left)
+            if (args.Function == EngineKeyFunctions.UIClick)
             {
                 _isDragging = false;
                 args.Handle();
             }
         }
 
-        protected override void MouseMove(GUIMouseMoveEventArgs args)
+        // NOTE: This code contains compilation errors as I was unable to find the correct event types.
+        protected internal override void MouseMove(GUIMouseMoveEventArgs args)
         {
             base.MouseMove(args);
 
