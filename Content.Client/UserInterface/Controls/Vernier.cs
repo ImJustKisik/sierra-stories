@@ -102,7 +102,7 @@ namespace Content.Client.UserInterface.Controls
             handle.DrawLine(startPoint, endPoint, indicatorColor);
         }
 
-        protected internal override void KeyBindDown(GUIBoundKeyEventArgs args)
+        protected override void KeyBindDown(GUIBoundKeyEventArgs args)
         {
             base.KeyBindDown(args);
 
@@ -115,7 +115,7 @@ namespace Content.Client.UserInterface.Controls
             }
         }
 
-        protected internal override void KeyBindUp(GUIBoundKeyEventArgs args)
+        protected override void KeyBindUp(GUIBoundKeyEventArgs args)
         {
             base.KeyBindUp(args);
 
@@ -126,7 +126,7 @@ namespace Content.Client.UserInterface.Controls
             }
         }
 
-        protected internal override void MouseMove(GUIMouseMoveEventArgs args)
+        protected override void MouseMove(GUIMouseMoveEventArgs args)
         {
             base.MouseMove(args);
 
