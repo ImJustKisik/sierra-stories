@@ -323,6 +323,10 @@ public sealed partial class AdvancedShuttleNavControl : BaseShuttleControl
 
     public bool TryLockTarget(EntityUid uid)
     {
+        // In passive mode, weapon-quality locks are unavailable.
+        if (!IsActiveEmission)
+            return false;
+
         if (!_targets.ContainsKey(uid))
             return false;
 
@@ -584,20 +588,45 @@ public sealed partial class AdvancedShuttleNavControl : BaseShuttleControl
 
             if (!IsActiveEmission)
             {
-                var bearingNoise = _random.NextFloat(-_passiveNoiseDegrees, _passiveNoiseDegrees);
-                var distanceNoise = _random.NextFloat(-_passiveDistanceNoise, _passiveDistanceNoise);
-                info = new TargetInfo
+                // Passive mode: probabilistic detection with distance/speed influence.
+                // Closer and faster targets are more likely to be detected.
+                var distanceFactor = Math.Clamp(distance / CornerRadarRange, 0f, 1f);
+                var speedFactor = Math.Clamp(speed / 10f, 0f, 1f); // 0..1 around ~10 m/s as a rough scale
+                var baseProb = 1f - distanceFactor * distanceFactor; // quadratic falloff with distance
+                var detectionProb = Math.Clamp(baseProb * (0.4f + 0.6f * speedFactor), 0f, 1f);
+
+                if (_random.NextFloat(0f, 1f) < detectionProb)
                 {
-                    ScreenPosition = screenPosition,
-                    Distance = MathF.Max(0f, distance + distanceNoise),
-                    Speed = speed,
-                    CourseDegrees = courseDegrees,
-                    BearingDegrees = NormalizeDegrees((float)bearing.Degrees + bearingNoise),
-                    DisplayName = displayName,
-                    TargetType = targetType,
-                    Color = state.Color,
-                };
-                state.LastDetection = now;
+                    // Noise increases with distance.
+                    var noiseScale = 0.5f + distanceFactor * 1.5f; // 0.5x near, up to 2x far
+                    var bearingNoise = _random.NextFloat(-_passiveNoiseDegrees, _passiveNoiseDegrees) * noiseScale;
+                    var distanceNoise = _random.NextFloat(-_passiveDistanceNoise, _passiveDistanceNoise) * noiseScale;
+
+                    // In passive mode, we shouldn't get clean IFF/type.
+                    var passiveDisplayName = Loc.GetString("advanced-radar-target-unknown-name");
+                    var passiveType = Loc.GetString("advanced-radar-target-unknown-type");
+
+                    info = new TargetInfo
+                    {
+                        ScreenPosition = screenPosition,
+                        Distance = MathF.Max(0f, distance + distanceNoise),
+                        Speed = speed, // keep for velocity vector rendering (approximate)
+                        CourseDegrees = courseDegrees,
+                        BearingDegrees = NormalizeDegrees((float)bearing.Degrees + bearingNoise),
+                        DisplayName = passiveDisplayName,
+                        TargetType = passiveType,
+                        Color = state.Color,
+                    };
+                    state.LastDetection = now;
+                }
+                else
+                {
+                    // No detection this sample: keep previous info if any to avoid wiping tracks.
+                    if (state.HasInfo)
+                        info = state.LastInfo;
+                    else
+                        info = default;
+                }
             }
 
             if (state.HasInfo)

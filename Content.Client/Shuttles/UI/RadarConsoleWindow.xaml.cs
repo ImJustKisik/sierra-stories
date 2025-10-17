@@ -10,6 +10,7 @@ using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Collections;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Localization;
+using Robust.Shared.Maths;
 
 using RangeControl = Robust.Client.UserInterface.Controls.Range;
 using ButtonEventArgs = Robust.Client.UserInterface.Controls.BaseButton.ButtonEventArgs;
@@ -66,9 +67,10 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
         ModeSectorButton.OnPressed += OnModeSectorPressed;
         ModeOverviewButton.Pressed = true;
 
-        SectorCenterSpinBox.SetButtons(new List<int> { -15, -5, -1 }, new List<int> { 1, 5, 15 });
-        SectorCenterSpinBox.ValueChanged += OnSectorCenterChanged;
-        UpdateSectorCenterValueLabel(SectorCenterSpinBox.Value);
+        SectorCenterKnob.DragSnapIncrement = 5f;
+        SectorCenterKnob.ScrollStep = 1f;
+        SectorCenterKnob.ValueChanged += OnSectorCenterChanged;
+        UpdateSectorCenterValueLabel(SectorCenterKnob.Value);
         UpdateStatusSummary();
         LinkEmitterButton.OnPressed += OnLinkEmitterPressed;
     }
@@ -175,7 +177,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
     private void SetSectorControlsVisible(bool visible)
     {
         SectorCenterLabel.Visible = visible;
-        SectorCenterSpinBox.Visible = visible;
+        SectorCenterKnob.Visible = visible;
         SectorCenterValue.Visible = visible;
     }
 
@@ -218,7 +220,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
 
         var value = NormalizeDegrees(_advancedControl.SectorCenterDegrees);
         _updatingSectorCenter = true;
-        SectorCenterSpinBox.OverrideValue(value);
+        SectorCenterKnob.SetValueWithoutEvent(value);
         _updatingSectorCenter = false;
         UpdateSectorCenterValueLabel(value);
         UpdateStatusSummary();
@@ -237,20 +239,15 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
 
     private void UpdateSectorCenterValueLabel(float value)
     {
-        SectorCenterValue.Text = Loc.GetString("advanced-radar-sector-center-value", ("value", $"{value:0}"));
+        SectorCenterValue.Text = Loc.GetString("advanced-radar-sector-center-value", ("value", $"{value:000}"));
     }
 
-    private static int NormalizeDegrees(int value)
+    private static float NormalizeDegrees(float value)
     {
-        var normalized = value % 360;
-        if (normalized < 0)
-            normalized += 360;
+        var normalized = value % 360f;
+        if (normalized < 0f)
+            normalized += 360f;
         return normalized;
-    }
-
-    private static int NormalizeDegrees(float value)
-    {
-        return NormalizeDegrees((int)MathF.Round(value));
     }
 
     private void OnModeOverviewPressed(ButtonEventArgs args)
@@ -320,15 +317,15 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
         UpdateStatusSummary();
     }
 
-    private void OnSectorCenterChanged(ValueChangedEventArgs args)
+    private void OnSectorCenterChanged(float value)
     {
-        var value = NormalizeDegrees(args.Value);
-
-        if (value != args.Value)
+        var normalized = NormalizeDegrees(value);
+        if (!MathHelper.CloseToPercent(normalized, value))
         {
             _updatingSectorCenter = true;
-            SectorCenterSpinBox.OverrideValue(value);
+            SectorCenterKnob.SetValueWithoutEvent(normalized);
             _updatingSectorCenter = false;
+            value = normalized;
         }
 
         UpdateSectorCenterValueLabel(value);
@@ -347,7 +344,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
     {
         var normalized = NormalizeDegrees(value);
         _updatingSectorCenter = true;
-        SectorCenterSpinBox.OverrideValue(normalized);
+        SectorCenterKnob.SetValueWithoutEvent(normalized);
         _updatingSectorCenter = false;
         UpdateSectorCenterValueLabel(normalized);
         UpdateStatusSummary();
@@ -536,10 +533,10 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
             : Loc.GetString("advanced-radar-mode-overview");
 
         var sectorText = mode == RadarScanMode.Sector
-            ? Loc.GetString("advanced-radar-status-sector-value", ("value", $"{SectorCenterSpinBox.Value:0}"))
+            ? Loc.GetString("advanced-radar-status-sector-value", ("value", $"{SectorCenterKnob.Value:000}"))
             : Loc.GetString("advanced-radar-status-sector-off");
 
-        var sweepText = Loc.GetString("advanced-radar-beam-speed-value", ("value", $"{BeamSpeedSlider.Value:0}"));
+        var sweepText = Loc.GetString("advanced-radar-beam-speed-value", ("value", $"{BeamSpeedSlider.Value:000}"));
 
         StatusSummaryLabel.Text = StatusSummaryLabel.Visible
             ? Loc.GetString("advanced-radar-status-summary",
@@ -560,7 +557,7 @@ public sealed partial class RadarConsoleWindow : FancyWindow,
             ModeSectorButton.OnPressed -= OnModeSectorPressed;
             EmissionActiveButton.OnPressed -= OnEmissionActivePressed;
             EmissionPassiveButton.OnPressed -= OnEmissionPassivePressed;
-            SectorCenterSpinBox.ValueChanged -= OnSectorCenterChanged;
+            SectorCenterKnob.ValueChanged -= OnSectorCenterChanged;
             LinkEmitterButton.OnPressed -= OnLinkEmitterPressed;
 
             if (_advancedControl != null)
