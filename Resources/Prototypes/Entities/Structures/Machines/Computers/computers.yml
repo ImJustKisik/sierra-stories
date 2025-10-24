@@ -842,7 +842,6 @@
     - map: [ "enum.WiresVisualLayers.MaintenancePanel" ]
       state: generic_panel_open
   - type: RadarConsole
-    requireEmitter: true
   - type: ActivatableUI
     key: enum.RadarConsoleUiKey.Key
   - type: UserInterface
@@ -857,43 +856,6 @@
     radius: 1.5
     energy: 1.6
     color: "#e6e227"
-
-- type: entity
-  parent: BaseComputerAiAccess
-  id: ComputerAdvancedRadar
-  name: advanced mass scanner computer
-  description: A high-resolution mass scanner with target tracking capabilities.
-  components:
-  - type: Sprite
-    layers:
-    - map: ["computerLayerBody"]
-      state: computer
-    - map: ["computerLayerKeyboard"]
-      state: generic_keyboard
-    - map: ["computerLayerScreen"]
-      state: solar_screen
-    - map: ["computerLayerKeys"]
-      state: generic_keys
-    - map: [ "enum.WiresVisualLayers.MaintenancePanel" ]
-      state: generic_panel_open
-  - type: RadarConsole
-    maxRange: 512
-    requireEmitter: true
-  - type: AdvancedRadarConsole
-  - type: ActivatableUI
-    key: enum.RadarConsoleUiKey.Key
-  - type: UserInterface
-    interfaces:
-      enum.RadarConsoleUiKey.Key:
-        type: RadarConsoleBoundUserInterface
-      enum.WiresUiKey.Key:
-        type: WiresBoundUserInterface
-  - type: Computer
-    board: RadarConsoleCircuitboard
-  - type: PointLight
-    radius: 1.5
-    energy: 1.6
-    color: "#4ec5ff"
 
 - type: entity
   id: ComputerCargoOrders
